@@ -9,17 +9,14 @@ public class TiledWorldIllusion : MonoBehaviour
     [SerializeField] private Transform sourceTileRoot;
     [SerializeField] private Transform sourcePlacedRoot;
 
+    [Header("Grid Size")]
+    [SerializeField, Min(1)] private int tileRadius = 2; // 2 = 5x5
+
     [Header("Clone Settings")]
     [SerializeField] private bool makeTileClonesVisualOnly = true;
     [SerializeField] private bool makePlacedMirrorsVisualOnly = true;
 
-    private readonly Vector2Int[] tileOffsets = new Vector2Int[]
-    {
-        new Vector2Int(-1, -1), new Vector2Int( 0, -1), new Vector2Int( 1, -1),
-        new Vector2Int(-1,  0),                           new Vector2Int( 1,  0),
-        new Vector2Int(-1,  1), new Vector2Int( 0,  1), new Vector2Int( 1,  1)
-    };
-
+    private Vector2Int[] tileOffsets;
     private Transform[] tileClones;
     private Transform[] clonePlacedRoots;
     private Bounds planeLocalBounds;
@@ -63,6 +60,7 @@ public class TiledWorldIllusion : MonoBehaviour
 
         planeLocalBounds = planeMeshFilter.sharedMesh.bounds;
 
+        GenerateTileOffsets();
         BuildClones();
         SyncTileClones();
     }
@@ -79,12 +77,35 @@ public class TiledWorldIllusion : MonoBehaviour
         DestroyAllPlacedMirrors();
     }
 
+    private void OnValidate()
+    {
+        if (tileRadius < 1)
+            tileRadius = 1;
+    }
+
+    private void GenerateTileOffsets()
+    {
+        List<Vector2Int> offsets = new List<Vector2Int>();
+
+        for (int z = -tileRadius; z <= tileRadius; z++)
+        {
+            for (int x = -tileRadius; x <= tileRadius; x++)
+            {
+                if (x == 0 && z == 0)
+                    continue;
+
+                offsets.Add(new Vector2Int(x, z));
+            }
+        }
+
+        tileOffsets = offsets.ToArray();
+    }
+
     public void RegisterPlacedObject(Transform sourceObject)
     {
         if (sourceObject == null)
             return;
 
-        // Best if placed objects are direct children of sourcePlacedRoot.
         if (sourceObject.parent != sourcePlacedRoot)
         {
             Debug.LogWarning(
@@ -153,7 +174,7 @@ public class TiledWorldIllusion : MonoBehaviour
 
     private void SyncTileClones()
     {
-        if (tileClones == null)
+        if (tileClones == null || tileOffsets == null)
             return;
 
         float tileSizeX = planeLocalBounds.size.x;
