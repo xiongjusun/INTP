@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+﻿﻿using UnityEngine;
 using INTP.Foundation;
 using INTP.Core.StateMachine;
 
@@ -14,6 +14,7 @@ namespace INTP.Core.Input
         private PlayerModeStateMachine _playerModeStateMachine;
         private InteractionStateMachine _interactionStateMachine;
         private EventBus _eventBus;
+        private PlayerModeState _last3DMode = PlayerModeState.FPS3DWalk;
 
         // 可配置的条件检查（留给之后的系统扩展）
         private bool _isVehicleAvailable = true;  // 飞行器是否可用（未损坏、有能量等）
@@ -88,14 +89,13 @@ namespace INTP.Core.Input
         }
 
         /// <summary>
-        /// 尝试切换玩家模式
-        /// 实现plan.mb中的TrySwitchMode伪代码
+        /// 尝试通过Tab在两种3D模式间切换（Walk <-> Ship）。
         /// </summary>
-        public bool TryTogglePlayerMode()
+        public bool TryToggleTabMode()
         {
             if (!EnsureReferences())
             {
-                Debug.LogWarning("TryTogglePlayerMode ignored: dependencies are not ready.");
+                Debug.LogWarning("TryToggleTabMode ignored: dependencies are not ready.");
                 return false;
             }
 
@@ -103,23 +103,71 @@ namespace INTP.Core.Input
                 return false;
 
             var currentMode = _playerModeStateMachine.CurrentMode;
-            
-            // 循环切换：FPS3DWalk → FPS3DShip → Plane2DCharacter → FPS3DWalk
+
+            // Tab仅在两种3D模式之间切换；2D模式下按Tab不做切换。
             var nextMode = currentMode switch
             {
                 PlayerModeState.FPS3DWalk => PlayerModeState.FPS3DShip,
-                PlayerModeState.FPS3DShip => PlayerModeState.Plane2DCharacter,
-                PlayerModeState.Plane2DCharacter => PlayerModeState.FPS3DWalk,
-                _ => PlayerModeState.FPS3DWalk
+                PlayerModeState.FPS3DShip => PlayerModeState.FPS3DWalk,
+                _ => currentMode
             };
+
+            if (nextMode == currentMode)
+                return false;
+
+            _last3DMode = nextMode;
 
             if (_playerModeStateMachine.TryTransitionMode(nextMode))
             {
-                Debug.Log($"Successfully switched player mode: {currentMode} -> {nextMode}");
+                Debug.Log($"Successfully switched player mode with Tab: {currentMode} -> {nextMode}");
                 return true;
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// 尝试通过Q进入/退出2D模式。
+        /// </summary>
+        public bool TryToggle2DMode()
+        {
+            if (!EnsureReferences())
+            {
+                Debug.LogWarning("TryToggle2DMode ignored: dependencies are not ready.");
+                return false;
+            }
+
+            if (!CanSwitchMode())
+                return false;
+
+            var currentMode = _playerModeStateMachine.CurrentMode;
+            PlayerModeState nextMode;
+
+            if (currentMode == PlayerModeState.Plane2DCharacter)
+            {
+                nextMode = _last3DMode;
+            }
+            else
+            {
+                _last3DMode = currentMode;
+                nextMode = PlayerModeState.Plane2DCharacter;
+            }
+
+            if (_playerModeStateMachine.TryTransitionMode(nextMode))
+            {
+                Debug.Log($"Successfully switched player mode with Q: {currentMode} -> {nextMode}");
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 兼容旧调用：默认沿用Tab切换逻辑。
+        /// </summary>
+        public bool TryTogglePlayerMode()
+        {
+            return TryToggleTabMode();
         }
 
         /// <summary>

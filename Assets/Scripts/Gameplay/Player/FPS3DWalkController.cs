@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+﻿﻿using UnityEngine;
 using UnityEngine.InputSystem;
 using INTP.Foundation;
 
@@ -118,7 +118,6 @@ namespace INTP.Gameplay.Player
             // 移动角色
             _characterController.Move(_moveDirection * Time.deltaTime);
 
-            Debug.Log($"FPS3D Walk - Speed: {_currentSpeed:F2}, Sprint: {_isSprinting}");
         }
 
         /// <summary>

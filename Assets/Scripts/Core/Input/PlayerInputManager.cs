@@ -1,4 +1,4 @@
-﻿﻿using UnityEngine;
+﻿﻿﻿using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.EventSystems;
@@ -232,7 +232,7 @@ namespace INTP.Core.Input
             {
                 "Move", "Look", "Attack", "Interact", "Jump",
                 "Sprint", "Crouch", "Previous", "Next",
-                "SwitchMode", "OpenBackpack", "DreamHold", "Pause"
+                "SwitchMode", "Toggle2DMode", "OpenBackpack", "DreamHold", "Pause"
             };
 
             foreach (var actionName in playerActions)
