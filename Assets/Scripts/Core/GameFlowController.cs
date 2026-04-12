@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿using System.Collections;
+﻿﻿﻿﻿﻿﻿﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -33,6 +33,11 @@ namespace INTP.Core
         [SerializeField] private string _blinkShaderProgressProperty = "_CloseAmount";
         [SerializeField] private float _blinkCloseDuration = 0.12f;
         [SerializeField] private float _blinkOpenDuration = 0.12f;
+
+        [Header("2D Mode Eye Icon Animation")]
+        [SerializeField] private Animator _blinkIconAnimator;
+        [SerializeField] private string _iconCloseTrigger = "Close";
+        [SerializeField] private string _iconOpenTrigger = "Open";
 
         private bool _is2DTransitionPlaying;
         private Material _blinkMaterialInstance;
@@ -215,6 +220,7 @@ namespace INTP.Core
             if (!isIn2DMode)
             {
                 // 进入2D：先闭眼并保持黑屏，再切换模式。
+                PlayBlinkIconClose();
                 _modeSwitchGuard.SetAnimationPlaying(true);
                 yield return PlayBlinkPhase(0f, 1f, _blinkCloseDuration);
                 _modeSwitchGuard.SetAnimationPlaying(false);
@@ -225,6 +231,7 @@ namespace INTP.Core
                     Debug.LogWarning("Enter 2D blocked by guard conditions.");
 
                     // 切换失败时恢复睁眼，避免卡黑屏。
+                    PlayBlinkIconOpen();
                     _modeSwitchGuard.SetAnimationPlaying(true);
                     yield return PlayBlinkPhase(1f, 0f, _blinkOpenDuration);
                     _modeSwitchGuard.SetAnimationPlaying(false);
@@ -248,6 +255,7 @@ namespace INTP.Core
                 else
                 {
                     _modeSwitchGuard.SetAnimationPlaying(true);
+                    PlayBlinkIconOpen();
                     yield return PlayBlinkPhase(1f, 0f, _blinkOpenDuration);
                     _modeSwitchGuard.SetAnimationPlaying(false);
                     Debug.Log("Exited 2D mode and eyes opened");
@@ -326,6 +334,28 @@ namespace INTP.Core
             {
                 _blinkMaterialInstance.SetFloat(_blinkShaderProgressProperty, clamped);
             }
+        }
+
+        private void PlayBlinkIconClose()
+        {
+            if (_blinkIconAnimator == null || string.IsNullOrEmpty(_iconCloseTrigger))
+                return;
+
+            if (!string.IsNullOrEmpty(_iconOpenTrigger))
+                _blinkIconAnimator.ResetTrigger(_iconOpenTrigger);
+
+            _blinkIconAnimator.SetTrigger(_iconCloseTrigger);
+        }
+
+        private void PlayBlinkIconOpen()
+        {
+            if (_blinkIconAnimator == null || string.IsNullOrEmpty(_iconOpenTrigger))
+                return;
+
+            if (!string.IsNullOrEmpty(_iconCloseTrigger))
+                _blinkIconAnimator.ResetTrigger(_iconCloseTrigger);
+
+            _blinkIconAnimator.SetTrigger(_iconOpenTrigger);
         }
 
         /// <summary>

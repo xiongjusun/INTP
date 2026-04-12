@@ -6,11 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="96a9d157-7c9b-471f-aecf-d0d01f4afbd6" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.INTP/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.INTP/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Resources/InputSystem_Actions.inputactions" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Resources/InputSystem_Actions.inputactions" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/Scripts/Core/GameFlowController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Core/GameFlowController.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Core/Input/ModeSwitchGuard.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Core/Input/ModeSwitchGuard.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Core/Input/PlayerInputManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Core/Input/PlayerInputManager.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Assets/Scripts/Gameplay/Player/FPS3DWalkController.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scripts/Gameplay/Player/FPS3DWalkController.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assets/gsplat-unity-vfx/Samples/GSScene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/gsplat-unity-vfx/Samples/GSScene.unity" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -102,7 +98,7 @@
       <workItem from="1775122605280" duration="239000" />
       <workItem from="1775122921992" duration="2038000" />
       <workItem from="1775795110241" duration="1521000" />
-      <workItem from="1775954591540" duration="8862000" />
+      <workItem from="1775954591540" duration="13988000" />
     </task>
     <servers />
   </component>
