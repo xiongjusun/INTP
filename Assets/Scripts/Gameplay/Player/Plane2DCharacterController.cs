@@ -81,7 +81,7 @@ namespace INTP.Gameplay.Player
         /// </summary>
         private void ApplyMovement()
         {
-            if (_rigidbody2D == null || !_rigidbody2D.isKinematic && _rigidbody2D.constraints != RigidbodyConstraints2D.FreezeRotation)
+            if (_rigidbody2D == null)
                 return;
 
             float targetSpeed = _isSprinting ? _sprintSpeed : _moveSpeed;
@@ -97,8 +97,8 @@ namespace INTP.Gameplay.Player
             }
             else
             {
-                // 如果是动态刚体，设置速度并保持重力
-                _rigidbody2D.linearVelocity = new Vector3(_currentVelocity.x, _rigidbody2D.linearVelocity.y, _currentVelocity.y);
+                // 如果是动态刚体，设置速度
+                _rigidbody2D.linearVelocity = _currentVelocity;
             }
 
             Debug.Log($"2D Character - Input: {_moveInput}, Velocity: {_currentVelocity.magnitude:F2}, Sprint: {_isSprinting}");

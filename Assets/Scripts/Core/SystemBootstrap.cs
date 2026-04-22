@@ -1,4 +1,4 @@
-﻿﻿﻿using UnityEngine;
+﻿﻿using UnityEngine;
 using INTP.Foundation;
 using INTP.Core.StateMachine;
 using INTP.Core.Input;
@@ -137,6 +137,7 @@ namespace INTP.Core
                 var obj = new GameObject("PlayerModeStateMachine");
                 _playerModeStateMachine = obj.AddComponent<PlayerModeStateMachine>();
             }
+            _playerModeStateMachine.InitializeMode(_initialPlayerMode);
             Debug.Log("✓ PlayerModeStateMachine initialized");
 
             _interactionStateMachine = FindObjectOfType<InteractionStateMachine>();
