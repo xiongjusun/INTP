@@ -1,10 +1,11 @@
-﻿﻿﻿﻿﻿﻿﻿using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using INTP.Foundation;
 using INTP.Core.StateMachine;
 using INTP.Core.Input;
+using INTP.Gameplay;
 
 namespace INTP.Core
 {
@@ -393,13 +394,13 @@ namespace INTP.Core
             {
                 _interactionStateMachine.TransitionTo(InteractionState.BackpackOpen);
                 Debug.Log("Backpack opened");
-                _eventBus.Publish(new BackpackOpenedEvent { });
+                _eventBus.Publish(new BackpackToggleEvent(true));
             }
             else if (currentInteractionState == InteractionState.BackpackOpen)
             {
                 _interactionStateMachine.TransitionTo(InteractionState.Normal);
                 Debug.Log("Backpack closed");
-                _eventBus.Publish(new BackpackClosedEvent { });
+                _eventBus.Publish(new BackpackToggleEvent(false));
             }
         }
 

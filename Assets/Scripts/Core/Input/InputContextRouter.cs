@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿using UnityEngine;
+﻿﻿using UnityEngine;
 using UnityEngine.InputSystem;
 using INTP.Foundation;
 using INTP.Core.StateMachine;
@@ -160,16 +160,11 @@ namespace INTP.Core.Input
             switch (state)
             {
                 case InteractionState.Normal:
-                    SwitchActionMap("Player");
                     Cursor.visible = false;
                     break;
                 case InteractionState.BackpackOpen:
                 case InteractionState.DraggingPlaceable:
-                    SwitchActionMap("UI");
-                    Cursor.visible = true;
-                    break;
                 case InteractionState.DreamSelecting:
-                    SwitchActionMap("UI");
                     Cursor.visible = true;
                     break;
             }

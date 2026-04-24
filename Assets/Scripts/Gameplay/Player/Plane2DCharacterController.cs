@@ -7,7 +7,7 @@ namespace INTP.Gameplay.Player
     /// <summary>
     /// 2D 平面小人控制器 - 2D俯视图模式
     /// WASD 控制上下左右移动
-    /// </summary>
+    /// </Dsummary>
     public class Plane2DCharacterController : MonoBehaviour
     {
         [Header("移动设置")]
@@ -18,6 +18,9 @@ namespace INTP.Gameplay.Player
 
         [Header("动画设置")]
         [SerializeField] private Animator _animator;
+
+        [Header("交互设置")]
+        [SerializeField] private Plane2DInteractionSystem _interactionSystem;
 
         private Vector2 _moveInput = Vector2.zero;
         private Vector2 _currentVelocity = Vector2.zero;
@@ -35,6 +38,8 @@ namespace INTP.Gameplay.Player
                 _rigidbody2D = GetComponent<Rigidbody2D>();
             if (_animator == null)
                 _animator = GetComponent<Animator>();
+            if (_interactionSystem == null)
+                _interactionSystem = GetComponent<Plane2DInteractionSystem>();
             _eventBus = EventBus.Instance;
         }
 
@@ -74,6 +79,12 @@ namespace INTP.Gameplay.Player
             // 标准化输入方向
             if (_moveInput.magnitude > 1f)
                 _moveInput = _moveInput.normalized;
+
+            // 移动时关闭背包
+            if (_moveInput.magnitude > 0.1f && BackpackService.Instance != null && BackpackService.Instance.IsOpen)
+            {
+                BackpackService.Instance.SetBackpackOpen(false);
+            }
         }
 
         /// <summary>
@@ -97,11 +108,8 @@ namespace INTP.Gameplay.Player
             }
             else
             {
-                // 如果是动态刚体，设置速度
                 _rigidbody2D.linearVelocity = _currentVelocity;
             }
-
-            Debug.Log($"2D Character - Input: {_moveInput}, Velocity: {_currentVelocity.magnitude:F2}, Sprint: {_isSprinting}");
         }
 
         /// <summary>
@@ -143,5 +151,15 @@ namespace INTP.Gameplay.Player
         /// 是否正在冲刺
         /// </summary>
         public bool IsSprinting => _isSprinting;
+
+        /// <summary>
+        /// 是否正在移动
+        /// </summary>
+        public bool IsMoving => _moveInput.magnitude > 0.1f;
+
+        /// <summary>
+        /// 获取移动方向
+        /// </summary>
+        public Vector2 MoveDirection => _moveInput;
     }
 }
