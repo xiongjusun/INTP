@@ -99,7 +99,7 @@
                     "name": "OpenBackpack",
                     "type": "Button",
                     "id": "8d9e3b2f-6d4c-5e3f-0a2b-7c5d6e4f3a2b",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -127,6 +127,15 @@
                     "type": "Button",
                     "id": "4f3e2d1c-0b9a-8765-4321-abcdef123456",
                     "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "VideoExit",
+                    "type": "Button",
+                    "id": "502c538c-134f-4887-a224-67d21cf250d3",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
@@ -620,11 +629,33 @@
                 {
                     "name": "",
                     "id": "1f2e3d4c-5b6a-7988-9012-aabbccddeeff",
-                    "path": "<Keyboard>/q",
+                    "path": "<Keyboard>/1",
                     "interactions": "",
                     "processors": "",
                     "groups": "Keyboard&Mouse",
                     "action": "Toggle2DMode",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "8819b407-197d-48ac-9489-bd9a1c77e244",
+                    "path": "<Keyboard>/x",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "VideoExit",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "ff63527a-161f-4070-9d85-6d6b6be3f455",
+                    "path": "<Gamepad>/buttonSouth",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "VideoExit",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

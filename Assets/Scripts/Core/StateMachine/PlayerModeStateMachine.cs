@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using INTP.Foundation;
@@ -24,7 +24,8 @@ namespace INTP.Core.StateMachine
         UIInteraction,       // UI交互模式 - 禁用玩家移动，只允许UI交互
         BackpackOpen,        // 背包打开
         DraggingPlaceable,   // 拖拽放置物品
-        DreamSelecting       // 梦境选择
+        DreamSelecting,      // 梦境选择
+        VideoPlaying         // 视频播放中 - 禁用玩家移动
     }
 
     /// <summary>

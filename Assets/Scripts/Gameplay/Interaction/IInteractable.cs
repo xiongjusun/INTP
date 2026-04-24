@@ -73,9 +73,8 @@ namespace INTP.Gameplay
                 Debug.LogError("[CollectibleItem] BackpackService.Instance is null!");
             }
             
-            // 发布事件（用于其他系统监听）
+            // 发布交互事件（用于其他系统监听，如音效、特效等）
             EventBus.Instance.Publish(new InteractEvent(gameObject, InteractableType.Collectible, itemId));
-            EventBus.Instance.Publish(new ItemAddedToBackpackEvent(itemId, itemName, icon));
             
             OnCollected();
             Destroy(gameObject);

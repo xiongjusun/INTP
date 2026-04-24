@@ -164,6 +164,13 @@ namespace INTP.Core
                 return;
             }
 
+            // 视频播放中不允许暂停
+            if (_interactionStateMachine.CurrentState == InteractionState.VideoPlaying)
+            {
+                Debug.Log("Pause ignored: video is playing");
+                return;
+            }
+
             var currentState = _gameFlowStateMachine.CurrentState;
 
             if (currentState == GameFlowState.Playing)
@@ -196,7 +203,7 @@ namespace INTP.Core
         }
 
         /// <summary>
-        /// 处理2D模式切换输入（Q键）
+        /// 处理2D模式切换输入（1键）
         /// </summary>
         private void OnToggle2DModePressed(InputAction.CallbackContext context)
         {

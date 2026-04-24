@@ -68,7 +68,6 @@ namespace INTP.Gameplay
         private void OnEnable()
         {
             EventBus.Instance.Subscribe<BackpackToggleEvent>(OnBackpackToggle);
-            EventBus.Instance.Subscribe<ItemAddedToBackpackEvent>(OnItemAdded);
         }
 
         private void OnDisable()
@@ -76,18 +75,12 @@ namespace INTP.Gameplay
             if (EventBus.Instance != null)
             {
                 EventBus.Instance.Unsubscribe<BackpackToggleEvent>(OnBackpackToggle);
-                EventBus.Instance.Unsubscribe<ItemAddedToBackpackEvent>(OnItemAdded);
             }
         }
 
         private void OnBackpackToggle(BackpackToggleEvent evt)
         {
             SetBackpackOpen(evt.IsOpen);
-        }
-
-        private void OnItemAdded(ItemAddedToBackpackEvent evt)
-        {
-            AddItem(evt.ItemId, evt.ItemName, evt.Icon);
         }
 
         /// <summary>

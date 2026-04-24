@@ -10,12 +10,18 @@ namespace INTP.Foundation
     public class EventBus : MonoBehaviour
     {
         private static EventBus _instance;
+        private static bool _applicationIsQuitting;
         private Dictionary<Type, List<Delegate>> _subscribers = new();
 
         public static EventBus Instance
         {
             get
             {
+                if (_applicationIsQuitting)
+                {
+                    return null;
+                }
+
                 if (_instance == null)
                 {
                     var obj = new GameObject("EventBus");
@@ -26,9 +32,28 @@ namespace INTP.Foundation
             }
         }
 
+        private void Awake()
+        {
+            if (_instance != null && _instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            _instance = this;
+        }
+
         private void OnDestroy()
         {
-            _subscribers.Clear();
+            if (_instance == this)
+            {
+                _subscribers.Clear();
+                _instance = null;
+            }
+        }
+
+        private void OnApplicationQuit()
+        {
+            _applicationIsQuitting = true;
         }
 
         /// <summary>
