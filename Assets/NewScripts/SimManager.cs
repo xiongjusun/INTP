@@ -14,11 +14,23 @@ public class SimManager : MonoBehaviour
     public GameObject predatorPrefab;
     public GameObject relationLinePrefab;
 
+    [Header("Bag Source Prefabs")]
+    public GameObject defaultBagSourcePrefab;
+    public GameObject infectionSourcePrefab;
+    public GameObject createrSourcePrefab;
+    public GameObject merriageSourcePrefab;
+    public GameObject selfProduceSourcePrefab;
+
     [Header("World")]
+    public Vector3 spawnCenter = new Vector3(70f, 0f, 70f);
     public Vector2 worldSize = new Vector2(80f, 80f);
     public float groundY = 0f;
     public Transform spawnedRoot;
     public int startingCreatureCount = 12;
+
+    [Header("Physics Spawn")]
+    public float agentSpawnYOffset = 1f;
+    public bool addAgentSpawnYOffset = true;
 
     [Header("Creature Visual Colors")]
     public Color creatureColor = new Color(0.1f, 0.8f, 0.2f);
@@ -38,12 +50,13 @@ public class SimManager : MonoBehaviour
 
     [Header("Disease / Bag Timers")]
     public float infectionSourceInterval = 50f;
-    public float createrUpgradeInterval = 30f;
+    public float createrSourceUpgradeInterval = 5f;
     public float politicalInfectionMultiplier = 0.35f;
 
     [Header("Spawn Offsets")]
     public float childSpawnRadius = 2f;
     public float selfProduceSpawnRadius = 1.5f;
+    public float fallbackSourceMarkerYOffset = 0.15f;
 
     public readonly List<CreatureAgent> agents = new List<CreatureAgent>();
     public readonly List<PowerCenter> powerCenters = new List<PowerCenter>();
@@ -75,6 +88,7 @@ public class SimManager : MonoBehaviour
 
         Instance = this;
         if (spawnedRoot == null) spawnedRoot = transform;
+        if (createrSourceUpgradeInterval <= 0f) createrSourceUpgradeInterval = 5f;
     }
 
     private void Start()
@@ -107,8 +121,12 @@ public class SimManager : MonoBehaviour
 
         if (createrUpgradeSourceCount > 0 && Time.time >= nextCreaterUpgradeTime)
         {
-            nextCreaterUpgradeTime = Time.time + createrUpgradeInterval;
-            for (int i = 0; i < createrUpgradeSourceCount; i++) UpgradeRandomCreatureToCreater();
+            nextCreaterUpgradeTime = Time.time + createrSourceUpgradeInterval;
+
+            for (int i = 0; i < createrUpgradeSourceCount; i++)
+            {
+                UpgradeRandomCreatureToCreater();
+            }
         }
     }
 
@@ -117,19 +135,19 @@ public class SimManager : MonoBehaviour
         switch (kind)
         {
             case BagItemKind.Infection:
-            {
-                int oldCount = infectionSourceCount;
-                infectionSourceCount = Mathf.Max(0, infectionSourceCount + delta);
-                if (oldCount == 0 && infectionSourceCount > 0) nextInfectionSourceTime = Time.time + infectionSourceInterval;
-                break;
-            }
+                {
+                    int oldCount = infectionSourceCount;
+                    infectionSourceCount = Mathf.Max(0, infectionSourceCount + delta);
+                    if (oldCount == 0 && infectionSourceCount > 0) nextInfectionSourceTime = Time.time + infectionSourceInterval;
+                    break;
+                }
             case BagItemKind.Creater:
-            {
-                int oldCount = createrUpgradeSourceCount;
-                createrUpgradeSourceCount = Mathf.Max(0, createrUpgradeSourceCount + delta);
-                if (oldCount == 0 && createrUpgradeSourceCount > 0) nextCreaterUpgradeTime = Time.time + createrUpgradeInterval;
-                break;
-            }
+                {
+                    int oldCount = createrUpgradeSourceCount;
+                    createrUpgradeSourceCount = Mathf.Max(0, createrUpgradeSourceCount + delta);
+                    if (oldCount == 0 && createrUpgradeSourceCount > 0) nextCreaterUpgradeTime = Time.time + createrSourceUpgradeInterval;
+                    break;
+                }
             case BagItemKind.Merriage:
                 marriageSourceCount = Mathf.Max(0, marriageSourceCount + delta);
                 break;
@@ -186,21 +204,30 @@ public class SimManager : MonoBehaviour
     {
         GameObject prefab = asCreater && createrPrefab != null ? createrPrefab : creaturePrefab;
         GameObject obj;
+        bool usedPrefab = prefab != null;
+        Vector3 spawnPosition = GetAgentSpawnPosition(position);
 
-        if (prefab != null)
+        if (usedPrefab)
         {
-            obj = Instantiate(prefab, ClampToWorld(position), Quaternion.identity, spawnedRoot);
+            obj = Instantiate(prefab, spawnPosition, Quaternion.identity, spawnedRoot);
         }
         else
         {
             obj = GameObject.CreatePrimitive(asCreater ? PrimitiveType.Capsule : PrimitiveType.Sphere);
             obj.transform.SetParent(spawnedRoot);
-            obj.transform.position = ClampToWorld(position);
+            obj.transform.position = spawnPosition;
         }
 
         obj.name = asCreater ? "Creater" : "Creature";
+
         CreatureAgent agent = obj.GetComponent<CreatureAgent>();
         if (agent == null) agent = obj.AddComponent<CreatureAgent>();
+
+        if (!usedPrefab)
+        {
+            agent.overrideNormalAndCreaterMaterialColor = true;
+        }
+
         agent.Initialize(asCreater, life);
         RegisterAgent(agent);
         return agent;
@@ -210,22 +237,25 @@ public class SimManager : MonoBehaviour
     {
         GameObject prefab = type == PowerCenterType.Religion ? religionPrefab : politicalPrefab;
         GameObject obj;
+        Vector3 spawnPosition = ClampToWorld(position);
 
         if (prefab != null)
         {
-            obj = Instantiate(prefab, ClampToWorld(position), Quaternion.identity, spawnedRoot);
+            obj = Instantiate(prefab, spawnPosition, Quaternion.identity, spawnedRoot);
         }
         else
         {
             obj = GameObject.CreatePrimitive(type == PowerCenterType.Religion ? PrimitiveType.Sphere : PrimitiveType.Cube);
             obj.transform.SetParent(spawnedRoot);
-            obj.transform.position = ClampToWorld(position);
+            obj.transform.position = spawnPosition;
         }
 
         obj.name = type.ToString();
+
         PowerCenter center = obj.GetComponent<PowerCenter>();
         if (center == null) center = obj.AddComponent<PowerCenter>();
         center.type = type;
+
         RegisterPowerCenter(center);
         return center;
     }
@@ -233,29 +263,117 @@ public class SimManager : MonoBehaviour
     public PredatorAgent SpawnPredator(Vector3 position)
     {
         GameObject obj;
+        Vector3 spawnPosition = GetAgentSpawnPosition(position);
+
         if (predatorPrefab != null)
         {
-            obj = Instantiate(predatorPrefab, ClampToWorld(position), Quaternion.identity, spawnedRoot);
+            obj = Instantiate(predatorPrefab, spawnPosition, Quaternion.identity, spawnedRoot);
         }
         else
         {
             obj = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             obj.transform.SetParent(spawnedRoot);
-            obj.transform.position = ClampToWorld(position);
+            obj.transform.position = spawnPosition;
         }
 
         obj.name = "Predator";
+
         PredatorAgent predator = obj.GetComponent<PredatorAgent>();
         if (predator == null) predator = obj.AddComponent<PredatorAgent>();
+
         RegisterPredator(predator);
         return predator;
     }
 
+    public GameObject SpawnBagSourceMarker(BagItemKind kind, Vector3 position)
+    {
+        GameObject prefab = GetBagSourcePrefab(kind);
+        GameObject obj;
+        Vector3 clampedPosition = ClampToWorld(position);
+
+        if (prefab != null)
+        {
+            obj = Instantiate(prefab, clampedPosition, Quaternion.identity, spawnedRoot);
+            obj.name = kind + " Source";
+        }
+        else
+        {
+            obj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            obj.name = kind + " Source";
+            obj.transform.SetParent(spawnedRoot);
+            obj.transform.position = clampedPosition + Vector3.up * fallbackSourceMarkerYOffset;
+            obj.transform.localScale = new Vector3(1.2f, 0.3f, 1.2f);
+            ApplyDefaultSourceMarkerVisual(obj, kind);
+        }
+
+        EnsureSourceMarkerCanBeClicked(obj);
+        return obj;
+    }
+
+    private GameObject GetBagSourcePrefab(BagItemKind kind)
+    {
+        switch (kind)
+        {
+            case BagItemKind.Infection:
+                return infectionSourcePrefab != null ? infectionSourcePrefab : defaultBagSourcePrefab;
+            case BagItemKind.Creater:
+                return createrSourcePrefab != null ? createrSourcePrefab : defaultBagSourcePrefab;
+            case BagItemKind.Merriage:
+                return merriageSourcePrefab != null ? merriageSourcePrefab : defaultBagSourcePrefab;
+            case BagItemKind.SelfProduce:
+                return selfProduceSourcePrefab != null ? selfProduceSourcePrefab : defaultBagSourcePrefab;
+            default:
+                return defaultBagSourcePrefab;
+        }
+    }
+
+    private void EnsureSourceMarkerCanBeClicked(GameObject obj)
+    {
+        if (obj == null) return;
+
+        Collider existingCollider = obj.GetComponentInChildren<Collider>();
+        if (existingCollider == null)
+        {
+            obj.AddComponent<BoxCollider>();
+        }
+    }
+
+    private void ApplyDefaultSourceMarkerVisual(GameObject obj, BagItemKind kind)
+    {
+        if (obj == null) return;
+
+        Renderer renderer = obj.GetComponentInChildren<Renderer>();
+        if (renderer == null) return;
+
+        switch (kind)
+        {
+            case BagItemKind.Infection:
+                renderer.material.color = new Color(0.6f, 0.0f, 0.7f);
+                break;
+            case BagItemKind.Creater:
+                renderer.material.color = new Color(0.2f, 0.6f, 1f);
+                break;
+            case BagItemKind.Merriage:
+                renderer.material.color = new Color(1f, 0.45f, 0.8f);
+                break;
+            case BagItemKind.SelfProduce:
+                renderer.material.color = new Color(0.2f, 1f, 0.7f);
+                break;
+            default:
+                renderer.material.color = Color.white;
+                break;
+        }
+    }
+
     public Vector3 RandomWorldPoint()
     {
-        float x = UnityEngine.Random.Range(-worldSize.x * 0.5f, worldSize.x * 0.5f);
-        float z = UnityEngine.Random.Range(-worldSize.y * 0.5f, worldSize.y * 0.5f);
-        return new Vector3(x, groundY, z);
+        float halfX = worldSize.x * 0.5f;
+        float halfZ = worldSize.y * 0.5f;
+
+        float x = UnityEngine.Random.Range(spawnCenter.x - halfX, spawnCenter.x + halfX);
+        float z = UnityEngine.Random.Range(spawnCenter.z - halfZ, spawnCenter.z + halfZ);
+
+        return new Vector3(x, spawnCenter.y, z);
     }
 
     public Vector3 RandomOffset(float radius)
@@ -264,10 +382,35 @@ public class SimManager : MonoBehaviour
         return new Vector3(v.x, 0f, v.y);
     }
 
+    public Vector3 GetAgentSpawnPosition(Vector3 position)
+    {
+        Vector3 result = ClampToWorld(position);
+
+        if (addAgentSpawnYOffset)
+        {
+            result.y += agentSpawnYOffset;
+        }
+
+        return result;
+    }
+
     public Vector3 ClampToWorld(Vector3 position)
     {
-        position.x = Mathf.Clamp(position.x, -worldSize.x * 0.5f, worldSize.x * 0.5f);
-        position.z = Mathf.Clamp(position.z, -worldSize.y * 0.5f, worldSize.y * 0.5f);
+        float halfX = worldSize.x * 0.5f;
+        float halfZ = worldSize.y * 0.5f;
+
+        position.x = Mathf.Clamp(position.x, spawnCenter.x - halfX, spawnCenter.x + halfX);
+        position.z = Mathf.Clamp(position.z, spawnCenter.z - halfZ, spawnCenter.z + halfZ);
+
+        // Important:
+        // Do NOT force position.y to groundY here.
+        // Creature, Creater, and Predator now use gravity and environment colliders for height.
+        return position;
+    }
+
+    public Vector3 ClampToWorldAtGroundY(Vector3 position)
+    {
+        position = ClampToWorld(position);
         position.y = groundY;
         return position;
     }
@@ -286,11 +429,12 @@ public class SimManager : MonoBehaviour
             {
                 float allowedRadius = politicalCenter.CurrentRadius;
                 if (createrMayLeaveSlightly) allowedRadius += politicalCenter.createrExtraExitDistance;
-                float fromCenter = Vector3.Distance(candidate.transform.position, politicalCenter.transform.position);
+
+                float fromCenter = FlatDistance(candidate.transform.position, politicalCenter.transform.position);
                 if (fromCenter > allowedRadius) continue;
             }
 
-            float sqr = (candidate.transform.position - from).sqrMagnitude;
+            float sqr = FlatSqrDistance(candidate.transform.position, from);
             if (sqr < bestSqr)
             {
                 bestSqr = sqr;
@@ -305,13 +449,31 @@ public class SimManager : MonoBehaviour
     {
         List<CreatureAgent> result = new List<CreatureAgent>();
         float sqrRadius = radius * radius;
+
         for (int i = 0; i < agents.Count; i++)
         {
             CreatureAgent agent = agents[i];
             if (agent == null || agent == ignore || !agent.IsLivingCreature) continue;
-            if ((agent.transform.position - center).sqrMagnitude <= sqrRadius) result.Add(agent);
+
+            if (FlatSqrDistance(agent.transform.position, center) <= sqrRadius)
+            {
+                result.Add(agent);
+            }
         }
+
         return result;
+    }
+
+    public float FlatDistance(Vector3 a, Vector3 b)
+    {
+        return Mathf.Sqrt(FlatSqrDistance(a, b));
+    }
+
+    public float FlatSqrDistance(Vector3 a, Vector3 b)
+    {
+        float dx = a.x - b.x;
+        float dz = a.z - b.z;
+        return dx * dx + dz * dz;
     }
 
     public bool HaveRelation(CreatureAgent a, CreatureAgent b)
@@ -323,6 +485,7 @@ public class SimManager : MonoBehaviour
     public void AddRelation(CreatureAgent a, CreatureAgent b)
     {
         if (a == null || b == null || a == b) return;
+
         RegisterAgent(a);
         RegisterAgent(b);
 
@@ -333,6 +496,7 @@ public class SimManager : MonoBehaviour
         if (relationLines.ContainsKey(key) && relationLines[key] != null) return;
 
         GameObject lineObj;
+
         if (relationLinePrefab != null)
         {
             lineObj = Instantiate(relationLinePrefab, Vector3.zero, Quaternion.identity, spawnedRoot);
@@ -345,6 +509,7 @@ public class SimManager : MonoBehaviour
 
         RelationLine line = lineObj.GetComponent<RelationLine>();
         if (line == null) line = lineObj.AddComponent<RelationLine>();
+
         line.Initialize(a, b);
         relationLines[key] = line;
     }
@@ -360,6 +525,7 @@ public class SimManager : MonoBehaviour
         }
 
         List<string> keysToRemove = new List<string>();
+
         foreach (KeyValuePair<string, RelationLine> pair in relationLines)
         {
             if (pair.Key.StartsWith(agent.simId + ":") || pair.Key.EndsWith(":" + agent.simId))
@@ -369,7 +535,10 @@ public class SimManager : MonoBehaviour
             }
         }
 
-        for (int i = 0; i < keysToRemove.Count; i++) relationLines.Remove(keysToRemove[i]);
+        for (int i = 0; i < keysToRemove.Count; i++)
+        {
+            relationLines.Remove(keysToRemove[i]);
+        }
     }
 
     private string RelationKey(int a, int b)
@@ -394,7 +563,8 @@ public class SimManager : MonoBehaviour
                 CreatureAgent b = snapshot[j];
                 if (!CanReproduce(b)) continue;
                 if (a == b) continue;
-                if ((a.transform.position - b.transform.position).sqrMagnitude > distanceSqr) continue;
+
+                if (FlatSqrDistance(a.transform.position, b.transform.position) > distanceSqr) continue;
 
                 float chance = baseMarriageChance;
                 if (a.IsReligionFollower || b.IsReligionFollower) chance *= religionReproductionMultiplier;
@@ -419,16 +589,19 @@ public class SimManager : MonoBehaviour
     private void DoMarriage(CreatureAgent a, CreatureAgent b)
     {
         bool alreadyRelated = HaveRelation(a, b);
-        Vector3 childPos = ClampToWorld((a.transform.position + b.transform.position) * 0.5f + RandomOffset(childSpawnRadius));
-        CreatureAgent child = SpawnCreature(childPos, 100f, false);
+
+        Vector3 childBasePosition = (a.transform.position + b.transform.position) * 0.5f + RandomOffset(childSpawnRadius);
+        CreatureAgent child = SpawnCreature(childBasePosition, 100f, false);
 
         if (!alreadyRelated)
         {
             float totalLife = Mathf.Max(1f, a.life + b.life);
             float share = totalLife / 3f;
+
             a.life = share;
             b.life = share;
             child.life = share;
+
             a.RefreshVisual();
             b.RefreshVisual();
             child.RefreshVisual();
@@ -441,12 +614,14 @@ public class SimManager : MonoBehaviour
         AddRelation(a, b);
         AddRelation(a, child);
         AddRelation(b, child);
+
         child.nextReproduceTime = Time.time + reproduceCooldown;
     }
 
     private void ScanForSelfProduce()
     {
         List<CreatureAgent> snapshot = new List<CreatureAgent>(agents);
+
         for (int i = 0; i < snapshot.Count; i++)
         {
             CreatureAgent agent = snapshot[i];
@@ -465,11 +640,14 @@ public class SimManager : MonoBehaviour
         float share = original.life * 0.5f;
         original.life = share;
 
-        Vector3 childPos = ClampToWorld(original.transform.position + RandomOffset(selfProduceSpawnRadius));
-        CreatureAgent child = SpawnCreature(childPos, share, original.isCreater);
+        Vector3 childBasePosition = original.transform.position + RandomOffset(selfProduceSpawnRadius);
+        CreatureAgent child = SpawnCreature(childBasePosition, share, original.isCreater);
+
         AddRelation(original, child);
+
         child.nextSelfProduceTime = Time.time + reproduceCooldown;
         child.nextReproduceTime = Time.time + reproduceCooldown;
+
         original.RefreshVisual();
         child.RefreshVisual();
     }
@@ -477,6 +655,7 @@ public class SimManager : MonoBehaviour
     private void InfectRandomAgent()
     {
         List<CreatureAgent> candidates = new List<CreatureAgent>();
+
         for (int i = 0; i < agents.Count; i++)
         {
             CreatureAgent agent = agents[i];
@@ -487,6 +666,7 @@ public class SimManager : MonoBehaviour
         }
 
         if (candidates.Count == 0) return;
+
         CreatureAgent target = candidates[UnityEngine.Random.Range(0, candidates.Count)];
         target.Infect();
     }
@@ -494,6 +674,7 @@ public class SimManager : MonoBehaviour
     private void UpgradeRandomCreatureToCreater()
     {
         List<CreatureAgent> candidates = new List<CreatureAgent>();
+
         for (int i = 0; i < agents.Count; i++)
         {
             CreatureAgent agent = agents[i];
@@ -504,6 +685,7 @@ public class SimManager : MonoBehaviour
         }
 
         if (candidates.Count == 0) return;
+
         CreatureAgent target = candidates[UnityEngine.Random.Range(0, candidates.Count)];
         target.BecomeCreater();
     }

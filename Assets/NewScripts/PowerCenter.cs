@@ -13,6 +13,13 @@ public class PowerCenter : MonoBehaviour
     public float visualScalePerRadius = 0.08f;
     public float createrExtraExitDistance = 5f;
 
+    [Header("Political Area Visual")]
+    public bool showPoliticalAreaCylinder = true;
+    public float politicalAreaHeight = 0.12f;
+    public float politicalAreaYOffset = 0.02f;
+    public Color politicalAreaColor = new Color(0.9f, 0.2f, 0.2f, 0.25f);
+    public Material politicalAreaMaterial;
+
     [Header("Capture")]
     public float captureScanInterval = 2f;
     public float religionCaptureChance = 0.30f;
@@ -42,11 +49,21 @@ public class PowerCenter : MonoBehaviour
     private float nextReligionTargetTime;
     private Renderer cachedRenderer;
 
+    private Vector3 originalLocalScale;
+    private bool originalScaleStored;
+
+    private GameObject politicalAreaVisual;
+    private Renderer politicalAreaRenderer;
+    private Material runtimePoliticalAreaMaterial;
+
     private void Awake()
     {
+        StoreOriginalScale();
+
         Collider col = GetComponent<Collider>();
         if (col != null) col.isTrigger = false;
-        cachedRenderer = GetComponentInChildren<Renderer>();
+
+        cachedRenderer = FindMainRenderer();
     }
 
     private void Start()
@@ -54,6 +71,11 @@ public class PowerCenter : MonoBehaviour
         if (SimManager.HasInstance) SimManager.Instance.RegisterPowerCenter(this);
         PickReligionTarget();
         RefreshVisual();
+
+        if (type == PowerCenterType.Political)
+        {
+            UpdatePoliticalSize();
+        }
     }
 
     private void Update()
@@ -62,6 +84,7 @@ public class PowerCenter : MonoBehaviour
 
         if (type == PowerCenterType.Religion)
         {
+            HidePoliticalAreaVisual();
             ReligionMoveUpdate();
         }
         else
@@ -74,6 +97,13 @@ public class PowerCenter : MonoBehaviour
             nextCaptureScanTime = Time.time + captureScanInterval;
             CaptureScan();
         }
+    }
+
+    private void StoreOriginalScale()
+    {
+        if (originalScaleStored) return;
+        originalLocalScale = transform.localScale;
+        originalScaleStored = true;
     }
 
     private void ReligionMoveUpdate()
@@ -96,8 +126,133 @@ public class PowerCenter : MonoBehaviour
 
     private void UpdatePoliticalSize()
     {
-        float size = Mathf.Max(1f, CurrentRadius * visualScalePerRadius);
-        transform.localScale = new Vector3(size, size, size);
+        StoreOriginalScale();
+
+        // Keep the power center prefab/model at its original size.
+        // Only the cylinder under it shows the political affected area.
+        transform.localScale = originalLocalScale;
+
+        if (!showPoliticalAreaCylinder)
+        {
+            HidePoliticalAreaVisual();
+            return;
+        }
+
+        EnsurePoliticalAreaVisual();
+        UpdatePoliticalAreaVisual();
+    }
+
+    private void EnsurePoliticalAreaVisual()
+    {
+        if (politicalAreaVisual != null)
+        {
+            if (!politicalAreaVisual.activeSelf) politicalAreaVisual.SetActive(true);
+            return;
+        }
+
+        politicalAreaVisual = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        politicalAreaVisual.name = "Political Affected Area Cylinder";
+        politicalAreaVisual.transform.SetParent(transform, false);
+
+        Collider areaCollider = politicalAreaVisual.GetComponent<Collider>();
+        if (areaCollider != null)
+        {
+            Destroy(areaCollider);
+        }
+
+        politicalAreaRenderer = politicalAreaVisual.GetComponent<Renderer>();
+        if (politicalAreaRenderer != null)
+        {
+            if (politicalAreaMaterial != null)
+            {
+                politicalAreaRenderer.sharedMaterial = politicalAreaMaterial;
+            }
+            else
+            {
+                runtimePoliticalAreaMaterial = CreateTransparentMaterial(politicalAreaColor);
+                politicalAreaRenderer.sharedMaterial = runtimePoliticalAreaMaterial;
+            }
+        }
+    }
+
+    private void UpdatePoliticalAreaVisual()
+    {
+        if (politicalAreaVisual == null) return;
+
+        float radius = Mathf.Max(0.05f, CurrentRadius);
+        float diameter = radius * 2f;
+        float height = Mathf.Max(0.01f, politicalAreaHeight);
+
+        float groundY = SimManager.HasInstance ? SimManager.Instance.groundY : transform.position.y;
+
+        politicalAreaVisual.transform.position = new Vector3(
+            transform.position.x,
+            groundY + politicalAreaYOffset + height * 0.5f,
+            transform.position.z
+        );
+
+        politicalAreaVisual.transform.rotation = Quaternion.identity;
+
+        Vector3 parentScale = transform.lossyScale;
+
+        politicalAreaVisual.transform.localScale = new Vector3(
+            SafeDivide(diameter, parentScale.x),
+            SafeDivide(height * 0.5f, parentScale.y),
+            SafeDivide(diameter, parentScale.z)
+        );
+
+        if (politicalAreaRenderer == null)
+        {
+            politicalAreaRenderer = politicalAreaVisual.GetComponent<Renderer>();
+        }
+
+        if (politicalAreaRenderer != null && politicalAreaMaterial == null)
+        {
+            if (politicalAreaRenderer.sharedMaterial != null)
+            {
+                politicalAreaRenderer.sharedMaterial.color = politicalAreaColor;
+            }
+        }
+    }
+
+    private float SafeDivide(float value, float divisor)
+    {
+        if (Mathf.Abs(divisor) <= 0.0001f) return value;
+        return value / divisor;
+    }
+
+    private void HidePoliticalAreaVisual()
+    {
+        if (politicalAreaVisual != null && politicalAreaVisual.activeSelf)
+        {
+            politicalAreaVisual.SetActive(false);
+        }
+    }
+
+    private Material CreateTransparentMaterial(Color color)
+    {
+        Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
+        if (shader == null) shader = Shader.Find("Sprites/Default");
+        if (shader == null) shader = Shader.Find("Standard");
+        if (shader == null) shader = Shader.Find("Diffuse");
+
+        Material material = shader != null ? new Material(shader) : null;
+        if (material == null) return null;
+
+        material.color = color;
+
+        if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
+        if (material.HasProperty("_Surface")) material.SetFloat("_Surface", 1f);
+        if (material.HasProperty("_Mode")) material.SetFloat("_Mode", 3f);
+
+        if (material.HasProperty("_SrcBlend")) material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        if (material.HasProperty("_DstBlend")) material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        if (material.HasProperty("_ZWrite")) material.SetInt("_ZWrite", 0);
+
+        material.EnableKeyword("_ALPHABLEND_ON");
+        material.renderQueue = 3000;
+
+        return material;
     }
 
     private void CaptureScan()
@@ -153,9 +308,25 @@ public class PowerCenter : MonoBehaviour
         followers.Remove(agent);
     }
 
+    private Renderer FindMainRenderer()
+    {
+        Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            if (politicalAreaVisual != null && renderers[i].gameObject == politicalAreaVisual) continue;
+            return renderers[i];
+        }
+
+        return null;
+    }
+
     private void RefreshVisual()
     {
-        if (cachedRenderer == null) cachedRenderer = GetComponentInChildren<Renderer>();
+        if (cachedRenderer == null || (politicalAreaVisual != null && cachedRenderer.gameObject == politicalAreaVisual))
+        {
+            cachedRenderer = FindMainRenderer();
+        }
+
         if (cachedRenderer == null) return;
         cachedRenderer.material.color = type == PowerCenterType.Religion ? new Color(1f, 0.8f, 0.1f) : new Color(0.9f, 0.2f, 0.2f);
     }
@@ -163,5 +334,10 @@ public class PowerCenter : MonoBehaviour
     private void OnDestroy()
     {
         if (SimManager.HasInstance) SimManager.Instance.UnregisterPowerCenter(this);
+
+        if (runtimePoliticalAreaMaterial != null)
+        {
+            Destroy(runtimePoliticalAreaMaterial);
+        }
     }
 }

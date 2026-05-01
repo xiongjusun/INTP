@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &1647595123617880711
+--- !u!1 &6096354543828227991
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,48 +8,47 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 5952992669432843876}
-  - component: {fileID: 1861131013358542228}
-  - component: {fileID: 8875879905893726992}
-  - component: {fileID: 4808066393342903639}
-  - component: {fileID: 550154470223686476}
+  - component: {fileID: 5176701981013322051}
+  - component: {fileID: 4474255288168371136}
+  - component: {fileID: 6963207238553662321}
+  - component: {fileID: 4324853712703298970}
   m_Layer: 0
-  m_Name: Political
+  m_Name: CreaterSource
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &5952992669432843876
+--- !u!4 &5176701981013322051
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1647595123617880711}
+  m_GameObject: {fileID: 6096354543828227991}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2, y: 2, z: 2}
+  m_LocalScale: {x: 1.2, y: 5, z: 1.2}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &1861131013358542228
+--- !u!33 &4474255288168371136
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1647595123617880711}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!65 &8875879905893726992
-BoxCollider:
+  m_GameObject: {fileID: 6096354543828227991}
+  m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!136 &6963207238553662321
+CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1647595123617880711}
+  m_GameObject: {fileID: 6096354543828227991}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -61,16 +60,18 @@ BoxCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
+  serializedVersion: 2
+  m_Radius: 0.5
+  m_Height: 2
+  m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
---- !u!23 &4808066393342903639
+--- !u!23 &4324853712703298970
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1647595123617880711}
+  m_GameObject: {fileID: 6096354543828227991}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -87,7 +88,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 25cd532f86edd42f9a9fad3e9fb61333, type: 2}
+  - {fileID: 2100000, guid: a27cb3fafe5c54a3eb56416dc966ca8c, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -109,36 +110,3 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &550154470223686476
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1647595123617880711}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 97842051b91054a8eabf81c8e6dd4570, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  type: 1
-  life: 100
-  baseRadius: 5
-  radiusPerLife: 0.025
-  visualScalePerRadius: 0.08
-  createrExtraExitDistance: 5
-  showPoliticalAreaCylinder: 1
-  politicalAreaHeight: 0.12
-  politicalAreaYOffset: 2
-  politicalAreaColor: {r: 0.9, g: 0.2, b: 0.2, a: 0.25}
-  politicalAreaMaterial: {fileID: 2100000, guid: 06d1fd5d3ade0479bbad6da87700d243, type: 2}
-  captureScanInterval: 2
-  religionCaptureChance: 0.3
-  politicalCaptureChance: 0.4
-  politicalToReligionChance: 0.4
-  politicalToPoliticalChance: 0.2
-  religionToReligionChance: 0.1
-  religionToPoliticalChance: 0.3
-  religionMoveSpeed: 2
-  religionWanderRetargetSeconds: 4
-  religionFollowerOrbitRadius: 5

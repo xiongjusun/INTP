@@ -19372,6 +19372,128 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2115416452}
   m_Mesh: {fileID: 4300000, guid: 11336362c401cf34793e97bfdcbb0ccf, type: 3}
+--- !u!1 &2124375089
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2124375092}
+  - component: {fileID: 2124375091}
+  - component: {fileID: 2124375090}
+  - component: {fileID: 2124375093}
+  m_Layer: 0
+  m_Name: Simulation Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2124375090
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2124375089}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6dd2d77a0b59e4475b08b93554a180fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  worldCamera: {fileID: 837060671}
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  preferBagPlacementSurface: 1
+  createUIAutomatically: 1
+  buttonSize: {x: 180, y: 36}
+  doubleClickWindow: 0.3
+  showDebugMessages: 0
+  blockPlacementWhenPointerOverOtherUI: 1
+  screenMargin: {x: 16, y: 16}
+  canvasSortingOrder: 30000
+  drawImmediateModeBag: 0
+  guiScale: 1
+--- !u!114 &2124375091
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2124375089}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f5737ae613724194bde036b26c18ef2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  creaturePrefab: {fileID: 6481978039115954460, guid: 5942fbd34ca4947d7862543b7ae1071e, type: 3}
+  createrPrefab: {fileID: 6317430325036278348, guid: aac136f04bf9a4285be194e5365512fc, type: 3}
+  religionPrefab: {fileID: 6188936110661381817, guid: 2298c2aa8a1b8447db0396fb4f2edbe4, type: 3}
+  politicalPrefab: {fileID: 1647595123617880711, guid: fa331387130f545ce8f1206a0a925643, type: 3}
+  predatorPrefab: {fileID: 7352001508614617025, guid: ab90773b5e6b740d6bb641513a96fd46, type: 3}
+  relationLinePrefab: {fileID: 6144951683049888521, guid: a7b540d31484c4f08945ed45c09f94c5, type: 3}
+  defaultBagSourcePrefab: {fileID: 7017110871231264391, guid: 104e3e1ddd3714135ab0f028c5a6c0c8, type: 3}
+  infectionSourcePrefab: {fileID: 2409608241857519461, guid: bcf4dfce06ced41ef9063436ab3814bb, type: 3}
+  createrSourcePrefab: {fileID: 6096354543828227991, guid: 8079325fb14de4314813d377bb0b7c41, type: 3}
+  merriageSourcePrefab: {fileID: 5847250232377711285, guid: 77741882dd9964c7f8762660a09360b3, type: 3}
+  selfProduceSourcePrefab: {fileID: 1632270300463602492, guid: d53c87e5ed14849fab2e8926f728b1da, type: 3}
+  spawnCenter: {x: 70, y: 0, z: 70}
+  worldSize: {x: 130, y: 130}
+  groundY: 5
+  spawnedRoot: {fileID: 0}
+  startingCreatureCount: 300
+  agentSpawnYOffset: 4
+  addAgentSpawnYOffset: 1
+  creatureColor: {r: 0.1, g: 0.8, b: 0.2, a: 1}
+  createrColor: {r: 0.2, g: 0.6, b: 1, a: 1}
+  remainColor: {r: 0.35, g: 0.35, b: 0.35, a: 1}
+  infectedColor: {r: 0.65, g: 0.1, b: 0.8, a: 1}
+  marriageDistance: 4
+  baseMarriageChance: 0.5
+  marriageCheckInterval: 1.5
+  reproduceCooldown: 8
+  religionReproductionMultiplier: 2
+  selfProduceCheckInterval: 4
+  selfProduceChancePerCheck: 0.15
+  selfProduceMinimumLife: 75
+  infectionSourceInterval: 50
+  createrSourceUpgradeInterval: 1
+  politicalInfectionMultiplier: 0.35
+  childSpawnRadius: 2
+  selfProduceSpawnRadius: 1.5
+  fallbackSourceMarkerYOffset: 0.15
+--- !u!4 &2124375092
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2124375089}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2124375093
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2124375089}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b34d83692cb741149375b751f14e55a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  alwaysShowCursor: 1
+  unlockCursor: 1
 --- !u!1 &2134841748
 GameObject:
   m_ObjectHideFlags: 0
@@ -19854,3 +19976,4 @@ SceneRoots:
   - {fileID: 327662703}
   - {fileID: 849369525}
   - {fileID: 120552721}
+  - {fileID: 2124375092}

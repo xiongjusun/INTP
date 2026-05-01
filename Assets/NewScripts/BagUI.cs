@@ -5,7 +5,6 @@ using UnityEngine.UI;
 
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.UI;
 #endif
 
 [DefaultExecutionOrder(-5000)]
@@ -22,17 +21,29 @@ public class BagUI : MonoBehaviour
 
     [Header("Scene References")]
     public Camera worldCamera;
+
+    [Tooltip("Used only when no BagPlacementSurface is hit. This is not changed automatically.")]
     public LayerMask groundMask = ~0;
+
+    [Tooltip("Add BagPlacementSurface to your existing ground/click surface. BagUI will prefer it before using groundMask.")]
+    public bool preferBagPlacementSurface = true;
 
     [Header("UI")]
     public bool createUIAutomatically = true;
     public Vector2 buttonSize = new Vector2(180f, 36f);
     public float doubleClickWindow = 0.30f;
     public bool showDebugMessages = true;
-    public bool blockPlacementWhenPointerOverOtherUI = false;
 
-    [Header("Emergency Visible Bag")]
-    public bool drawImmediateModeBag = true;
+    [Tooltip("Recommended for projects that already have UI. Prevents placing objects behind other EventSystem UI.")]
+    public bool blockPlacementWhenPointerOverOtherUI = true;
+
+    [Header("Bag Screen Position")]
+    public Vector2 screenMargin = new Vector2(16f, 16f);
+    public int canvasSortingOrder = 30000;
+
+    [Header("Emergency IMGUI Bag")]
+    [Tooltip("Off by default so this does not draw a second bag over existing project UI. Turn on only if the Canvas bag is hidden.")]
+    public bool drawImmediateModeBag = false;
     public float guiScale = 1f;
 
     private static BagUI activeBag;
@@ -95,16 +106,11 @@ public class BagUI : MonoBehaviour
         if (createUIAutomatically && !uiCreated) CreateBagUI();
         if (worldCamera == null) return;
 
-        if (LeftMousePressedThisFrame())
+        if (LeftPointerPressedThisFrame())
         {
             Vector3 screenPosition = GetPointerScreenPosition();
 
-            // Block placement below the emergency IMGUI bag.
-            // The actual button click is handled by OnGUI, which is more reliable in projects
-            // where the normal UI/EventSystem has been changed.
             if (drawImmediateModeBag && PointerIsInsideImmediateBag(screenPosition)) return;
-
-            // This makes the canvas bag clickable even if Unity Button.onClick is not firing.
             if (TryHandleManualCanvasBagClick(screenPosition)) return;
 
             HandleWorldMouseClick(screenPosition);
@@ -147,13 +153,13 @@ public class BagUI : MonoBehaviour
         }
 
         string status = hasSelectedItem
-            ? "Selected: " + selectedItem + "\nClick the plane to place."
-            : "Click item, then click plane.";
+            ? "Selected: " + selectedItem + "\nClick the ground to place."
+            : "Click item, then click ground.";
+
         GUI.Label(new Rect(x, y + 4f, w, 55f), status);
 
         GUI.matrix = oldMatrix;
 
-        // Prevent IMGUI clicks from falling through to world placement when this method receives the event.
         if (Event.current != null && Event.current.type == EventType.MouseDown && oldPanel.Contains(Event.current.mousePosition))
         {
             Event.current.Use();
@@ -168,16 +174,17 @@ public class BagUI : MonoBehaviour
 
         if (statusText != null)
         {
-            statusText.text = "Selected: " + selectedItem + "\nClick the plane to place it.";
+            statusText.text = "Selected: " + selectedItem + "\nClick the ground to place it.";
         }
 
         if (showDebugMessages) Debug.Log("Creature Simulation Bag: selected " + selectedItem);
     }
 
-    private bool LeftMousePressedThisFrame()
+    private bool LeftPointerPressedThisFrame()
     {
 #if ENABLE_INPUT_SYSTEM
         if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) return true;
+        if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame) return true;
 #endif
 
 #if ENABLE_LEGACY_INPUT_MANAGER
@@ -196,7 +203,7 @@ public class BagUI : MonoBehaviour
             return new Vector3(position.x, position.y, 0f);
         }
 
-        if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.isPressed)
+        if (Touchscreen.current != null)
         {
             Vector2 position = Touchscreen.current.primaryTouch.position.ReadValue();
             return new Vector3(position.x, position.y, 0f);
@@ -213,9 +220,6 @@ public class BagUI : MonoBehaviour
     private bool PointerIsInsideImmediateBag(Vector3 screenPosition)
     {
         Rect panel = GetImmediateBagRect();
-
-        // Update and Physics use bottom-left screen coordinates.
-        // IMGUI uses top-left screen coordinates.
         Vector2 guiPoint = new Vector2(screenPosition.x, Screen.height - screenPosition.y);
         return panel.Contains(guiPoint);
     }
@@ -225,7 +229,9 @@ public class BagUI : MonoBehaviour
         float scale = guiScale > 0f ? guiScale : 1f;
         float width = 210f * scale;
         float height = 330f * scale;
-        return new Rect(16f, Screen.height - height - 16f, width, height);
+        float x = Screen.width - width - screenMargin.x;
+        float y = Screen.height - height - screenMargin.y;
+        return new Rect(x, y, width, height);
     }
 
     private bool TryHandleManualCanvasBagClick(Vector3 screenPosition)
@@ -245,7 +251,6 @@ public class BagUI : MonoBehaviour
             }
         }
 
-        // The click was on the bag panel but not on a button. Do not place things under the UI.
         return true;
     }
 
@@ -282,7 +287,7 @@ public class BagUI : MonoBehaviour
         }
         else
         {
-            SetStatus("Could not find the plane. Make sure the scene has a ground plane/collider.");
+            SetStatus("Could not find ground. Add BagPlacementSurface to your ground, set Ground Mask, or use groundY fallback.");
         }
     }
 
@@ -290,7 +295,12 @@ public class BagUI : MonoBehaviour
     {
         if (panelRect != null && RectTransformUtility.RectangleContainsScreenPoint(panelRect, screenPosition, null)) return true;
         if (EventSystem.current == null) return false;
+
+#if ENABLE_INPUT_SYSTEM
         return EventSystem.current.IsPointerOverGameObject();
+#else
+        return EventSystem.current.IsPointerOverGameObject();
+#endif
     }
 
     private BagPlacedObject RaycastBagPlacedObject(Vector3 screenPosition)
@@ -316,6 +326,13 @@ public class BagUI : MonoBehaviour
     private bool GetGroundPoint(Vector3 screenPosition, out Vector3 point)
     {
         Ray ray = worldCamera.ScreenPointToRay(screenPosition);
+
+        if (preferBagPlacementSurface && TryGetPointOnPlacementSurface(ray, out point))
+        {
+            if (SimManager.HasInstance) point = SimManager.Instance.ClampToWorld(point);
+            return true;
+        }
+
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, 500f, groundMask, QueryTriggerInteraction.Ignore))
         {
@@ -338,11 +355,41 @@ public class BagUI : MonoBehaviour
         return false;
     }
 
+    private bool TryGetPointOnPlacementSurface(Ray ray, out Vector3 point)
+    {
+        RaycastHit[] hits = Physics.RaycastAll(ray, 500f, ~0, QueryTriggerInteraction.Ignore);
+        if (hits == null || hits.Length == 0)
+        {
+            point = Vector3.zero;
+            return false;
+        }
+
+        float bestDistance = float.MaxValue;
+        bool found = false;
+        point = Vector3.zero;
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            if (hits[i].collider == null) continue;
+            BagPlacementSurface surface = hits[i].collider.GetComponentInParent<BagPlacementSurface>();
+            if (surface == null) continue;
+
+            if (hits[i].distance < bestDistance)
+            {
+                bestDistance = hits[i].distance;
+                point = hits[i].point;
+                found = true;
+            }
+        }
+
+        return found;
+    }
+
     private void PlaceSelectedItem(Vector3 point)
     {
         if (!SimManager.HasInstance)
         {
-            SetStatus("No SimManager found. Add SimManager or use the bootstrap/setup menu.");
+            SetStatus("No SimManager found. Add SimManager to the scene first.");
             return;
         }
 
@@ -367,16 +414,11 @@ public class BagUI : MonoBehaviour
                 break;
             }
             case BagItemKind.Creater:
-            {
-                CreatureAgent creater = SimManager.Instance.SpawnCreature(point, 100f, true);
-                AddPlacedComponent(creater.gameObject, BagItemKind.Creater, true);
-                break;
-            }
             case BagItemKind.Infection:
             case BagItemKind.Merriage:
             case BagItemKind.SelfProduce:
             {
-                GameObject marker = CreateSourceMarker(selectedItem, point);
+                GameObject marker = SimManager.Instance.SpawnBagSourceMarker(selectedItem, point);
                 AddPlacedComponent(marker, selectedItem, true);
                 break;
             }
@@ -391,28 +433,8 @@ public class BagUI : MonoBehaviour
         placed.Initialize(kind, countsAsSource);
     }
 
-    private GameObject CreateSourceMarker(BagItemKind kind, Vector3 point)
-    {
-        GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        marker.name = kind + " Source";
-        marker.transform.position = point + Vector3.up * 0.15f;
-        marker.transform.localScale = new Vector3(1.2f, 0.3f, 1.2f);
-
-        Renderer renderer = marker.GetComponent<Renderer>();
-        if (renderer != null)
-        {
-            if (kind == BagItemKind.Infection) renderer.material.color = new Color(0.6f, 0.0f, 0.7f);
-            if (kind == BagItemKind.Merriage) renderer.material.color = new Color(1f, 0.45f, 0.8f);
-            if (kind == BagItemKind.SelfProduce) renderer.material.color = new Color(0.2f, 1f, 0.7f);
-        }
-
-        return marker;
-    }
-
     private void CreateBagUI()
     {
-        EnsureCompatibleEventSystem();
-
         GameObject canvasObj = new GameObject("Creature Simulation Bag Canvas");
         canvasObj.transform.SetParent(null, false);
         canvasObj.transform.SetAsLastSibling();
@@ -420,7 +442,7 @@ public class BagUI : MonoBehaviour
         bagCanvas = canvasObj.AddComponent<Canvas>();
         bagCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
         bagCanvas.overrideSorting = true;
-        bagCanvas.sortingOrder = 30000;
+        bagCanvas.sortingOrder = canvasSortingOrder;
 
         CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
@@ -432,11 +454,18 @@ public class BagUI : MonoBehaviour
         GameObject panel = new GameObject("Bag Panel - CLICK THESE BUTTONS");
         panel.transform.SetParent(canvasObj.transform, false);
         panelRect = panel.AddComponent<RectTransform>();
-        panelRect.anchorMin = new Vector2(0f, 0f);
-        panelRect.anchorMax = new Vector2(0f, 0f);
-        panelRect.pivot = new Vector2(0f, 0f);
-        panelRect.anchoredPosition = new Vector2(16f, 16f);
-        panelRect.sizeDelta = new Vector2(buttonSize.x + 20f, 340f);
+
+        panelRect.anchorMin = new Vector2(1f, 0f);
+        panelRect.anchorMax = new Vector2(1f, 0f);
+        panelRect.pivot = new Vector2(1f, 0f);
+        panelRect.anchoredPosition = new Vector2(-screenMargin.x, screenMargin.y);
+
+        float panelHeight = Mathf.Max(
+            410f,
+            10f + 26f + 8f + itemOrder.Length * (buttonSize.y + 6f) + 8f + 56f + 10f
+        );
+
+        panelRect.sizeDelta = new Vector2(buttonSize.x + 20f, panelHeight);
 
         Image panelImage = panel.AddComponent<Image>();
         panelImage.color = new Color(0.03f, 0.03f, 0.03f, 0.88f);
@@ -463,14 +492,14 @@ public class BagUI : MonoBehaviour
         AddButton(panel.transform, "SelfProduce", BagItemKind.SelfProduce, 10f, y);
         y += buttonSize.y + 8f;
 
-        statusText = AddLabel(panel.transform, "Bag Status", "Click a bag item, then click the plane.", 10f, y, buttonSize.x, 48f, 13, TextAnchor.UpperLeft, FontStyle.Normal);
+        statusText = AddLabel(panel.transform, "Bag Status", "Click a bag item, then click the ground.", 10f, y, buttonSize.x, 56f, 13, TextAnchor.UpperLeft, FontStyle.Normal);
 
         uiCreated = true;
         RefreshButtonVisuals();
 
         if (showDebugMessages)
         {
-            Debug.Log("Creature Simulation: Bag UI created with manual positions. You should see actual buttons now.");
+            Debug.Log("Creature Simulation: Bag UI created at bottom-right without changing existing UI/EventSystem settings.");
         }
     }
 
@@ -492,35 +521,6 @@ public class BagUI : MonoBehaviour
         return text;
     }
 
-    private void EnsureCompatibleEventSystem()
-    {
-        EventSystem eventSystem = FindObjectOfType<EventSystem>();
-        if (eventSystem == null)
-        {
-            GameObject eventSystemObject = new GameObject("EventSystem");
-            eventSystem = eventSystemObject.AddComponent<EventSystem>();
-        }
-
-#if ENABLE_INPUT_SYSTEM
-        StandaloneInputModule oldModule = eventSystem.GetComponent<StandaloneInputModule>();
-        if (oldModule != null)
-        {
-            oldModule.enabled = false;
-            Destroy(oldModule);
-        }
-
-        if (eventSystem.GetComponent<InputSystemUIInputModule>() == null)
-        {
-            eventSystem.gameObject.AddComponent<InputSystemUIInputModule>();
-        }
-#elif ENABLE_LEGACY_INPUT_MANAGER
-        if (eventSystem.GetComponent<StandaloneInputModule>() == null)
-        {
-            eventSystem.gameObject.AddComponent<StandaloneInputModule>();
-        }
-#endif
-    }
-
     private void AddButton(Transform parent, string label, BagItemKind kind, float x, float yFromTop)
     {
         GameObject buttonObj = new GameObject(label + " Button");
@@ -531,10 +531,6 @@ public class BagUI : MonoBehaviour
         Image image = buttonObj.AddComponent<Image>();
         image.color = new Color(1f, 1f, 1f, 0.95f);
         image.raycastTarget = true;
-
-        Button button = buttonObj.AddComponent<Button>();
-        button.targetGraphic = image;
-        button.onClick.AddListener(delegate { SelectBagItem((int)kind); });
 
         GameObject textObj = new GameObject("Text");
         textObj.transform.SetParent(buttonObj.transform, false);
@@ -627,7 +623,6 @@ public class BagUI : MonoBehaviour
             }
             catch
             {
-                // Some Unity versions throw if the old built-in font name is requested.
             }
         }
 

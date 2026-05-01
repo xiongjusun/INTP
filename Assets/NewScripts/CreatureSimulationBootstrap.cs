@@ -1,27 +1,23 @@
 using UnityEngine;
 
+/// <summary>
+/// Safe bootstrap for existing projects.
+/// It does NOT auto-run, does NOT change your camera, and does NOT change your existing UI/EventSystem.
+/// Use it only if you want a component-based setup instead of the editor menu.
+/// </summary>
 [DefaultExecutionOrder(-10000)]
 public class CreatureSimulationBootstrap : MonoBehaviour
 {
-    public bool createRuntimeSetup = true;
-    public bool createPlaneIfMissing = true;
-    public bool createCameraIfMissing = true;
-    public bool createLightIfMissing = true;
+    [Header("Safe Runtime Setup")]
+    public bool createRuntimeSetup = false;
     public bool createManagerIfMissing = true;
     public bool createBagIfMissing = true;
+    public bool assignMainCameraToBagIfAvailable = true;
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void AutoCreateBootstrap()
-    {
-        // If the setup menu was not used, this guarantees the simulation still has a manager and a visible bag.
-        if (FindObjectOfType<CreatureSimulationBootstrap>() != null) return;
-
-        bool needsBootstrap = FindObjectOfType<SimManager>() == null || FindObjectOfType<BagUI>() == null;
-        if (!needsBootstrap) return;
-
-        GameObject obj = new GameObject("Creature Simulation Bootstrap");
-        obj.AddComponent<CreatureSimulationBootstrap>();
-    }
+    [Header("Optional Helpers - Off By Default")]
+    public bool createPlaneIfMissing = false;
+    public bool createCameraIfMissing = false;
+    public bool createLightIfMissing = false;
 
     private void Awake()
     {
@@ -38,6 +34,7 @@ public class CreatureSimulationBootstrap : MonoBehaviour
             plane.name = "Simulation Plane";
             plane.transform.position = Vector3.zero;
             plane.transform.localScale = new Vector3(8f, 1f, 8f);
+            if (plane.GetComponent<BagPlacementSurface>() == null) plane.AddComponent<BagPlacementSurface>();
         }
 
         if (createCameraIfMissing && cam == null)
@@ -45,21 +42,7 @@ public class CreatureSimulationBootstrap : MonoBehaviour
             GameObject cameraObj = new GameObject("Main Camera");
             cam = cameraObj.AddComponent<Camera>();
             cameraObj.tag = "MainCamera";
-            cam.transform.position = new Vector3(0f, 55f, -55f);
-            cam.transform.rotation = Quaternion.Euler(55f, 0f, 0f);
-            cam.orthographic = true;
-            cam.orthographicSize = 48f;
-        }
-        else if (cam != null)
-        {
-            // Put the camera in a useful view only if it looks unconfigured for this top-down prototype.
-            if (cam.transform.position == Vector3.zero)
-            {
-                cam.transform.position = new Vector3(0f, 55f, -55f);
-                cam.transform.rotation = Quaternion.Euler(55f, 0f, 0f);
-                cam.orthographic = true;
-                cam.orthographicSize = 48f;
-            }
+            // No forced position/rotation here. Configure this camera yourself if you enable this option.
         }
 
         if (createLightIfMissing && FindObjectOfType<Light>() == null)
@@ -67,7 +50,6 @@ public class CreatureSimulationBootstrap : MonoBehaviour
             GameObject lightObj = new GameObject("Directional Light");
             Light light = lightObj.AddComponent<Light>();
             light.type = LightType.Directional;
-            lightObj.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
         }
 
         SimManager manager = FindObjectOfType<SimManager>();
@@ -75,17 +57,17 @@ public class CreatureSimulationBootstrap : MonoBehaviour
         {
             GameObject managerObj = new GameObject("Simulation Manager");
             manager = managerObj.AddComponent<SimManager>();
-            manager.worldSize = new Vector2(80f, 80f);
-            manager.startingCreatureCount = 12;
         }
 
         if (createBagIfMissing && FindObjectOfType<BagUI>() == null)
         {
             GameObject bagHost = manager != null ? manager.gameObject : new GameObject("Bag UI Host");
             BagUI bag = bagHost.AddComponent<BagUI>();
-            bag.worldCamera = cam;
+            if (assignMainCameraToBagIfAvailable) bag.worldCamera = cam;
             bag.groundMask = ~0;
             bag.createUIAutomatically = true;
+            bag.blockPlacementWhenPointerOverOtherUI = true;
+            bag.drawImmediateModeBag = false;
         }
     }
 }

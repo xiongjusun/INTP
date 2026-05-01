@@ -8,8 +8,42 @@ public static class SimulationPrefabCreator
     private const string PrefabFolder = RootFolder + "/Prefabs";
     private const string MaterialFolder = RootFolder + "/Materials";
 
-    [MenuItem("Tools/Creature Simulation/Create Default Prefabs + Scene Objects")]
-    public static void CreateDefaults()
+    private class PrefabSet
+    {
+        public GameObject creaturePrefab;
+        public GameObject createrPrefab;
+        public GameObject religionPrefab;
+        public GameObject politicalPrefab;
+        public GameObject predatorPrefab;
+        public GameObject relationLinePrefab;
+        public GameObject defaultBagSourcePrefab;
+        public GameObject infectionSourcePrefab;
+        public GameObject createrSourcePrefab;
+        public GameObject merriageSourcePrefab;
+        public GameObject selfProduceSourcePrefab;
+    }
+
+    [MenuItem("Tools/Creature Simulation/Safe Install In Current Scene (No Camera Or UI Settings Change)")]
+    public static void SafeInstallInCurrentScene()
+    {
+        PrefabSet prefabs = CreateOrUpdateDefaultPrefabs();
+        CreateOrUpdateSceneSafely(prefabs);
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        Debug.Log("Creature Simulation safe install complete. Existing camera, existing Canvas UI, EventSystem, Input settings, and project layers were not changed.");
+    }
+
+    [MenuItem("Tools/Creature Simulation/Create Default Prefabs Only")]
+    public static void CreateDefaultPrefabsOnly()
+    {
+        CreateOrUpdateDefaultPrefabs();
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        Debug.Log("Creature Simulation default prefabs created/updated only. Scene, camera, UI, EventSystem, Input settings, and layers were not changed.");
+    }
+
+    private static PrefabSet CreateOrUpdateDefaultPrefabs()
     {
         EnsureFolder("Assets", "CreatureSimulation");
         EnsureFolder(RootFolder, "Prefabs");
@@ -19,21 +53,31 @@ public static class SimulationPrefabCreator
         Material createrMat = MakeMaterial("Creater", new Color(0.2f, 0.6f, 1f));
         Material religionMat = MakeMaterial("Religion", new Color(1f, 0.8f, 0.1f));
         Material politicalMat = MakeMaterial("Political", new Color(0.9f, 0.2f, 0.2f));
+        Material politicalAreaMat = MakeTransparentMaterial("PoliticalArea", new Color(0.9f, 0.2f, 0.2f, 0.25f));
         Material predatorMat = MakeMaterial("Predator", Color.black);
         Material lineMat = MakeMaterial("RelationLine", Color.white);
 
-        GameObject creaturePrefab = CreateCreaturePrefab("Creature", false, creatureMat);
-        GameObject createrPrefab = CreateCreaturePrefab("Creater", true, createrMat);
-        GameObject religionPrefab = CreatePowerCenterPrefab("Religion", PowerCenterType.Religion, PrimitiveType.Sphere, religionMat);
-        GameObject politicalPrefab = CreatePowerCenterPrefab("Political", PowerCenterType.Political, PrimitiveType.Cube, politicalMat);
-        GameObject predatorPrefab = CreatePredatorPrefab(predatorMat);
-        GameObject relationLinePrefab = CreateRelationLinePrefab(lineMat);
+        Material infectionSourceMat = MakeMaterial("InfectionSource", new Color(0.6f, 0.0f, 0.7f));
+        Material createrSourceMat = MakeMaterial("CreaterSource", new Color(0.2f, 0.6f, 1f));
+        Material merriageSourceMat = MakeMaterial("MerriageSource", new Color(1f, 0.45f, 0.8f));
+        Material selfProduceSourceMat = MakeMaterial("SelfProduceSource", new Color(0.2f, 1f, 0.7f));
+        Material defaultSourceMat = MakeMaterial("DefaultBagSource", Color.white);
 
-        CreateOrUpdateScene(creaturePrefab, createrPrefab, religionPrefab, politicalPrefab, predatorPrefab, relationLinePrefab);
+        PrefabSet prefabs = new PrefabSet();
+        prefabs.creaturePrefab = CreateCreaturePrefab("Creature", false, creatureMat);
+        prefabs.createrPrefab = CreateCreaturePrefab("Creater", true, createrMat);
+        prefabs.religionPrefab = CreatePowerCenterPrefab("Religion", PowerCenterType.Religion, PrimitiveType.Sphere, religionMat, null);
+        prefabs.politicalPrefab = CreatePowerCenterPrefab("Political", PowerCenterType.Political, PrimitiveType.Cube, politicalMat, politicalAreaMat);
+        prefabs.predatorPrefab = CreatePredatorPrefab(predatorMat);
+        prefabs.relationLinePrefab = CreateRelationLinePrefab(lineMat);
 
-        AssetDatabase.SaveAssets();
-        AssetDatabase.Refresh();
-        Debug.Log("Creature Simulation setup complete. Press Play, then use the bottom-left bag UI to place systems.");
+        prefabs.defaultBagSourcePrefab = CreateBagSourcePrefab("DefaultBagSource", defaultSourceMat);
+        prefabs.infectionSourcePrefab = CreateBagSourcePrefab("InfectionSource", infectionSourceMat);
+        prefabs.createrSourcePrefab = CreateBagSourcePrefab("CreaterSource", createrSourceMat);
+        prefabs.merriageSourcePrefab = CreateBagSourcePrefab("MerriageSource", merriageSourceMat);
+        prefabs.selfProduceSourcePrefab = CreateBagSourcePrefab("SelfProduceSource", selfProduceSourceMat);
+
+        return prefabs;
     }
 
     private static GameObject CreateCreaturePrefab(string name, bool creater, Material material)
@@ -49,6 +93,9 @@ public static class SimulationPrefabCreator
         agent.isCreater = creater;
         agent.life = 100f;
         agent.moveSpeed = creater ? 3.4f : 3f;
+        agent.overrideNormalAndCreaterMaterialColor = false;
+        agent.overrideRemainAndInfectedMaterialColor = true;
+        agent.useCreaterPrefabVisualWhenConverted = true;
 
         Rigidbody rb = obj.GetComponent<Rigidbody>();
         if (rb == null) rb = obj.AddComponent<Rigidbody>();
@@ -61,7 +108,7 @@ public static class SimulationPrefabCreator
         return SavePrefab(obj, name);
     }
 
-    private static GameObject CreatePowerCenterPrefab(string name, PowerCenterType type, PrimitiveType primitive, Material material)
+    private static GameObject CreatePowerCenterPrefab(string name, PowerCenterType type, PrimitiveType primitive, Material material, Material politicalAreaMaterial)
     {
         GameObject obj = GameObject.CreatePrimitive(primitive);
         obj.name = name;
@@ -74,6 +121,8 @@ public static class SimulationPrefabCreator
         center.type = type;
         center.life = 100f;
         center.baseRadius = type == PowerCenterType.Religion ? 12f : 10f;
+        center.showPoliticalAreaCylinder = type == PowerCenterType.Political;
+        center.politicalAreaMaterial = politicalAreaMaterial;
 
         return SavePrefab(obj, name);
     }
@@ -89,6 +138,7 @@ public static class SimulationPrefabCreator
 
         PredatorAgent predator = obj.AddComponent<PredatorAgent>();
         predator.moveSpeed = 5f;
+        predator.overrideMaterialColor = false;
 
         Rigidbody rb = obj.GetComponent<Rigidbody>();
         if (rb == null) rb = obj.AddComponent<Rigidbody>();
@@ -99,6 +149,21 @@ public static class SimulationPrefabCreator
         if (col != null) col.isTrigger = true;
 
         return SavePrefab(obj, "Predator");
+    }
+
+    private static GameObject CreateBagSourcePrefab(string name, Material material)
+    {
+        GameObject obj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+        obj.name = name;
+        obj.transform.localScale = new Vector3(1.2f, 0.3f, 1.2f);
+
+        Renderer renderer = obj.GetComponent<Renderer>();
+        if (renderer != null) renderer.sharedMaterial = material;
+
+        Collider col = obj.GetComponent<Collider>();
+        if (col == null) obj.AddComponent<BoxCollider>();
+
+        return SavePrefab(obj, name);
     }
 
     private static GameObject CreateRelationLinePrefab(Material material)
@@ -122,60 +187,59 @@ public static class SimulationPrefabCreator
         return prefab;
     }
 
-    private static void CreateOrUpdateScene(GameObject creaturePrefab, GameObject createrPrefab, GameObject religionPrefab, GameObject politicalPrefab, GameObject predatorPrefab, GameObject relationLinePrefab)
+    private static void CreateOrUpdateSceneSafely(PrefabSet prefabs)
     {
-        int groundLayer = EnsureLayer("Ground");
-
-        GameObject plane = GameObject.Find("Simulation Plane");
-        if (plane == null)
-        {
-            plane = GameObject.CreatePrimitive(PrimitiveType.Plane);
-            plane.name = "Simulation Plane";
-            plane.transform.position = Vector3.zero;
-            plane.transform.localScale = new Vector3(8f, 1f, 8f);
-        }
-        plane.layer = groundLayer;
-
-        Camera cam = Camera.main;
-        if (cam == null)
-        {
-            GameObject cameraObj = new GameObject("Main Camera");
-            cam = cameraObj.AddComponent<Camera>();
-            cameraObj.tag = "MainCamera";
-        }
-        cam.transform.position = new Vector3(0f, 55f, -55f);
-        cam.transform.rotation = Quaternion.Euler(55f, 0f, 0f);
-        cam.orthographic = true;
-        cam.orthographicSize = 48f;
-
-        if (Object.FindObjectOfType<Light>() == null)
-        {
-            GameObject lightObj = new GameObject("Directional Light");
-            Light light = lightObj.AddComponent<Light>();
-            light.type = LightType.Directional;
-            lightObj.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
-        }
-
+        bool createdManager = false;
         SimManager manager = Object.FindObjectOfType<SimManager>();
         if (manager == null)
         {
             GameObject managerObj = new GameObject("Simulation Manager");
             manager = managerObj.AddComponent<SimManager>();
+            createdManager = true;
         }
 
-        manager.creaturePrefab = creaturePrefab;
-        manager.createrPrefab = createrPrefab;
-        manager.religionPrefab = religionPrefab;
-        manager.politicalPrefab = politicalPrefab;
-        manager.predatorPrefab = predatorPrefab;
-        manager.relationLinePrefab = relationLinePrefab;
-        manager.worldSize = new Vector2(80f, 80f);
-        manager.startingCreatureCount = 12;
+        if (manager.creaturePrefab == null) manager.creaturePrefab = prefabs.creaturePrefab;
+        if (manager.createrPrefab == null) manager.createrPrefab = prefabs.createrPrefab;
+        if (manager.religionPrefab == null) manager.religionPrefab = prefabs.religionPrefab;
+        if (manager.politicalPrefab == null) manager.politicalPrefab = prefabs.politicalPrefab;
+        if (manager.predatorPrefab == null) manager.predatorPrefab = prefabs.predatorPrefab;
+        if (manager.relationLinePrefab == null) manager.relationLinePrefab = prefabs.relationLinePrefab;
+
+        if (manager.defaultBagSourcePrefab == null) manager.defaultBagSourcePrefab = prefabs.defaultBagSourcePrefab;
+        if (manager.infectionSourcePrefab == null) manager.infectionSourcePrefab = prefabs.infectionSourcePrefab;
+        if (manager.createrSourcePrefab == null) manager.createrSourcePrefab = prefabs.createrSourcePrefab;
+        if (manager.merriageSourcePrefab == null) manager.merriageSourcePrefab = prefabs.merriageSourcePrefab;
+        if (manager.selfProduceSourcePrefab == null) manager.selfProduceSourcePrefab = prefabs.selfProduceSourcePrefab;
+
+        manager.createrSourceUpgradeInterval = 5f;
+        if (createdManager)
+        {
+            manager.worldSize = new Vector2(80f, 80f);
+            manager.startingCreatureCount = 12;
+        }
 
         BagUI bag = Object.FindObjectOfType<BagUI>();
-        if (bag == null) bag = manager.gameObject.AddComponent<BagUI>();
-        bag.worldCamera = cam;
-        bag.groundMask = 1 << groundLayer;
+        if (bag == null)
+        {
+            bag = manager.gameObject.AddComponent<BagUI>();
+        }
+
+        if (bag.worldCamera == null)
+        {
+            bag.worldCamera = Camera.main;
+        }
+
+        bag.createUIAutomatically = true;
+        bag.blockPlacementWhenPointerOverOtherUI = true;
+        bag.drawImmediateModeBag = false;
+        bag.screenMargin = new Vector2(16f, 16f);
+        bag.groundMask = ~0;
+        bag.preferBagPlacementSurface = true;
+
+        EditorUtility.SetDirty(manager);
+        EditorUtility.SetDirty(bag);
+
+        Debug.Log("Safe scene setup done. For best placement, add BagPlacementSurface to your existing ground/click surface. No camera transform, Canvas, EventSystem, Input settings, layer settings, or ProjectSettings were modified.");
     }
 
     private static Material MakeMaterial(string name, Color color)
@@ -184,7 +248,7 @@ public static class SimulationPrefabCreator
         Material existing = AssetDatabase.LoadAssetAtPath<Material>(path);
         if (existing != null)
         {
-            existing.color = color;
+            SetMaterialColor(existing, color);
             return existing;
         }
 
@@ -193,41 +257,39 @@ public static class SimulationPrefabCreator
         if (shader == null) shader = Shader.Find("Sprites/Default");
 
         Material material = new Material(shader);
-        material.color = color;
+        SetMaterialColor(material, color);
         AssetDatabase.CreateAsset(material, path);
         return material;
+    }
+
+    private static Material MakeTransparentMaterial(string name, Color color)
+    {
+        Material material = MakeMaterial(name, color);
+
+        if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
+        if (material.HasProperty("_Surface")) material.SetFloat("_Surface", 1f);
+        if (material.HasProperty("_Mode")) material.SetFloat("_Mode", 3f);
+        if (material.HasProperty("_SrcBlend")) material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+        if (material.HasProperty("_DstBlend")) material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+        if (material.HasProperty("_ZWrite")) material.SetInt("_ZWrite", 0);
+        material.EnableKeyword("_ALPHABLEND_ON");
+        material.renderQueue = 3000;
+
+        return material;
+    }
+
+    private static void SetMaterialColor(Material material, Color color)
+    {
+        if (material == null) return;
+        material.color = color;
+        if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
+        if (material.HasProperty("_Color")) material.SetColor("_Color", color);
     }
 
     private static void EnsureFolder(string parent, string folderName)
     {
         string path = parent + "/" + folderName;
         if (!AssetDatabase.IsValidFolder(path)) AssetDatabase.CreateFolder(parent, folderName);
-    }
-
-    private static int EnsureLayer(string layerName)
-    {
-        SerializedObject tagManager = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
-        SerializedProperty layers = tagManager.FindProperty("layers");
-
-        for (int i = 0; i < layers.arraySize; i++)
-        {
-            SerializedProperty layer = layers.GetArrayElementAtIndex(i);
-            if (layer.stringValue == layerName) return i;
-        }
-
-        for (int i = 8; i < layers.arraySize; i++)
-        {
-            SerializedProperty layer = layers.GetArrayElementAtIndex(i);
-            if (string.IsNullOrEmpty(layer.stringValue))
-            {
-                layer.stringValue = layerName;
-                tagManager.ApplyModifiedProperties();
-                return i;
-            }
-        }
-
-        Debug.LogWarning("No empty user layer found. Using Default layer for placement ground.");
-        return 0;
     }
 }
 #endif

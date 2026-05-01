@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &3102856735819543976
+--- !u!1 &6188936110661381817
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,11 +8,11 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 97945158408570521}
-  - component: {fileID: 1283350014814017901}
-  - component: {fileID: 2682722267064821440}
-  - component: {fileID: 4992244640365780473}
-  - component: {fileID: 1629255932058269782}
+  - component: {fileID: 5283597065685908838}
+  - component: {fileID: 6129325668265212870}
+  - component: {fileID: 5800485859924904524}
+  - component: {fileID: 7912430616815956045}
+  - component: {fileID: 5390964287869500425}
   m_Layer: 0
   m_Name: Religion
   m_TagString: Untagged
@@ -20,37 +20,36 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &97945158408570521
+--- !u!4 &5283597065685908838
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3102856735819543976}
+  m_GameObject: {fileID: 6188936110661381817}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
+  m_LocalPosition: {x: 0, y: 2, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 9208725647475084058}
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &1283350014814017901
+--- !u!33 &6129325668265212870
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3102856735819543976}
+  m_GameObject: {fileID: 6188936110661381817}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!135 &2682722267064821440
+--- !u!135 &5800485859924904524
 SphereCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3102856735819543976}
+  m_GameObject: {fileID: 6188936110661381817}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -65,13 +64,13 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
---- !u!23 &4992244640365780473
+--- !u!23 &7912430616815956045
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3102856735819543976}
+  m_GameObject: {fileID: 6188936110661381817}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -88,7 +87,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: efaa9f356885d4c1eba595c74da3f92b, type: 2}
+  - {fileID: 2100000, guid: 7da2dc73d498a4f28bffc6f7d0b1e7e5, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -110,13 +109,13 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &1629255932058269782
+--- !u!114 &5390964287869500425
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3102856735819543976}
+  m_GameObject: {fileID: 6188936110661381817}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 97842051b91054a8eabf81c8e6dd4570, type: 3}
@@ -128,7 +127,12 @@ MonoBehaviour:
   radiusPerLife: 0.025
   visualScalePerRadius: 0.08
   createrExtraExitDistance: 5
-  captureScanInterval: 2
+  showPoliticalAreaCylinder: 0
+  politicalAreaHeight: 0.12
+  politicalAreaYOffset: 7
+  politicalAreaColor: {r: 0.9, g: 0.2, b: 0.2, a: 0.25}
+  politicalAreaMaterial: {fileID: 0}
+  captureScanInterval: 12
   religionCaptureChance: 0.3
   politicalCaptureChance: 0.4
   politicalToReligionChance: 0.4
@@ -136,83 +140,5 @@ MonoBehaviour:
   religionToReligionChance: 0.1
   religionToPoliticalChance: 0.3
   religionMoveSpeed: 2
-  religionWanderRetargetSeconds: 4
-  religionFollowerOrbitRadius: 5
---- !u!1001 &6434506542431771882
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 97945158408570521}
-    m_Modifications:
-    - target: {fileID: -6689036041284674117, guid: bd4fc8e3c7a127a418d2f24cb6b945b1, type: 3}
-      propertyPath: m_Name
-      value: lowpolycrown
-      objectReference: {fileID: 0}
-    - target: {fileID: 2774220344278030320, guid: bd4fc8e3c7a127a418d2f24cb6b945b1, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2774220344278030320, guid: bd4fc8e3c7a127a418d2f24cb6b945b1, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2774220344278030320, guid: bd4fc8e3c7a127a418d2f24cb6b945b1, type: 3}
-      propertyPath: m_LocalScale.z
-      value: 0.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2774220344278030320, guid: bd4fc8e3c7a127a418d2f24cb6b945b1, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2774220344278030320, guid: bd4fc8e3c7a127a418d2f24cb6b945b1, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0.44
-      objectReference: {fileID: 0}
-    - target: {fileID: 2774220344278030320, guid: bd4fc8e3c7a127a418d2f24cb6b945b1, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2774220344278030320, guid: bd4fc8e3c7a127a418d2f24cb6b945b1, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0.7071068
-      objectReference: {fileID: 0}
-    - target: {fileID: 2774220344278030320, guid: bd4fc8e3c7a127a418d2f24cb6b945b1, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0.7071068
-      objectReference: {fileID: 0}
-    - target: {fileID: 2774220344278030320, guid: bd4fc8e3c7a127a418d2f24cb6b945b1, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2774220344278030320, guid: bd4fc8e3c7a127a418d2f24cb6b945b1, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2774220344278030320, guid: bd4fc8e3c7a127a418d2f24cb6b945b1, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2774220344278030320, guid: bd4fc8e3c7a127a418d2f24cb6b945b1, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2774220344278030320, guid: bd4fc8e3c7a127a418d2f24cb6b945b1, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2774220344278030320, guid: bd4fc8e3c7a127a418d2f24cb6b945b1, type: 3}
-      propertyPath: m_ConstrainProportionsScale
-      value: 1
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: -5645937942226959685, guid: bd4fc8e3c7a127a418d2f24cb6b945b1, type: 3}
---- !u!4 &9208725647475084058 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 2774220344278030320, guid: bd4fc8e3c7a127a418d2f24cb6b945b1, type: 3}
-  m_PrefabInstance: {fileID: 6434506542431771882}
-  m_PrefabAsset: {fileID: 0}
+  religionWanderRetargetSeconds: 3
+  religionFollowerOrbitRadius: 7
