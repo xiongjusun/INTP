@@ -199,7 +199,8 @@ Shader "Unlit/ProceduralBackground URP"
             Varyings vert(Attributes input)
             {
                 Varyings output;
-                output.positionCS = TransformObjectToHClipPos(input.positionOS);
+                const float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
+                output.positionCS = TransformWorldToHClip(positionWS);
                 output.uv = input.uv;
                 return output;
             }
