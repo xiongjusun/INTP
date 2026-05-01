@@ -63,7 +63,15 @@ public class PowerCenter : MonoBehaviour
         Collider col = GetComponent<Collider>();
         if (col != null) col.isTrigger = false;
 
-        cachedRenderer = FindMainRenderer();
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb == null) rb = gameObject.AddComponent<Rigidbody>();
+
+        rb.useGravity = true;
+        rb.isKinematic = false;
+        rb.constraints = RigidbodyConstraints.FreezeRotation;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
+
+        cachedRenderer = GetComponentInChildren<Renderer>();
     }
 
     private void Start()
@@ -108,19 +116,58 @@ public class PowerCenter : MonoBehaviour
 
     private void ReligionMoveUpdate()
     {
-        if (Time.time >= nextReligionTargetTime || Vector3.Distance(transform.position, religionTarget) <= 0.4f)
+        if (Time.time >= nextReligionTargetTime || FlatDistance(transform.position, religionTarget) <= 0.4f)
         {
             PickReligionTarget();
         }
 
-        Vector3 next = Vector3.MoveTowards(transform.position, religionTarget, religionMoveSpeed * Time.deltaTime);
-        transform.position = SimManager.Instance.ClampToWorld(next);
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb == null)
+        {
+            Vector3 next = Vector3.MoveTowards(transform.position, religionTarget, religionMoveSpeed * Time.deltaTime);
+            transform.position = SimManager.Instance.ClampToWorld(next);
+            return;
+        }
+
+        Vector3 current = rb.position;
+
+        Vector3 flatToTarget = new Vector3(
+            religionTarget.x - current.x,
+            0f,
+            religionTarget.z - current.z
+        );
+
+        if (flatToTarget.magnitude <= 0.4f)
+        {
+#if UNITY_6000_0_OR_NEWER
+            rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
+#else
+        rb.velocity = new Vector3(0f, rb.velocity.y, 0f);
+#endif
+            return;
+        }
+
+        Vector3 horizontalVelocity = flatToTarget.normalized * religionMoveSpeed;
+
+#if UNITY_6000_0_OR_NEWER
+        rb.linearVelocity = new Vector3(horizontalVelocity.x, rb.linearVelocity.y, horizontalVelocity.z);
+#else
+    rb.velocity = new Vector3(horizontalVelocity.x, rb.velocity.y, horizontalVelocity.z);
+#endif
+    }
+
+    private float FlatDistance(Vector3 a, Vector3 b)
+    {
+        float dx = a.x - b.x;
+        float dz = a.z - b.z;
+        return Mathf.Sqrt(dx * dx + dz * dz);
     }
 
     private void PickReligionTarget()
     {
         if (!SimManager.HasInstance) return;
         religionTarget = SimManager.Instance.ClampToWorld(transform.position + SimManager.Instance.RandomOffset(baseRadius));
+        religionTarget.y = transform.position.y;
         nextReligionTargetTime = Time.time + religionWanderRetargetSeconds;
     }
 

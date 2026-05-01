@@ -19459,9 +19459,9 @@ MonoBehaviour:
   selfProduceCheckInterval: 4
   selfProduceChancePerCheck: 0.15
   selfProduceMinimumLife: 75
-  infectionSourceInterval: 50
+  infectionSourceInterval: 5
   createrSourceUpgradeInterval: 1
-  politicalInfectionMultiplier: 0.35
+  politicalInfectionMultiplier: 0.2
   childSpawnRadius: 2
   selfProduceSpawnRadius: 1.5
   fallbackSourceMarkerYOffset: 0.15
