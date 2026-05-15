@@ -1,4 +1,4 @@
-﻿﻿﻿using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 using INTP.Foundation;
 
@@ -61,10 +61,15 @@ namespace INTP.Gameplay.Player
 
         /// <summary>
         /// 处理鼠标看视角
+        /// 按住左 Alt 键时不响应鼠标视角
         /// </summary>
         private void HandleMouseLook()
         {
             if (_mainCamera == null)
+                return;
+
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard != null && keyboard.leftAltKey.isPressed)
                 return;
 
             Vector2 mouseDelta = Mouse.current.delta.ReadValue();
